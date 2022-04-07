@@ -1,6 +1,7 @@
+from dataclasses import fields
 from django import forms
 
-from .models import Post, Comment
+from .models import Post, Comment, Follow
 
 
 class PostForm(forms.ModelForm):
@@ -24,3 +25,11 @@ class CommentForm(forms.ModelForm):
         fields = ['text']
         labels = {'text': 'Добавить комментарий'}
         help_texts = {'text': 'Текст комментария'}
+
+
+class FollowForm(forms.ModelForm):
+    class Meta:
+        model = Follow
+        fields = ['user']
+        labels = {'user': 'Подписка на:', 'author': 'Автор записи'}
+
