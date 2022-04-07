@@ -9,7 +9,7 @@ from django.core.cache import cache
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.conf import settings
 
-from posts.models import Post, Group, Comment
+from posts.models import Post, Group, Comment, Follow
 
 
 User = get_user_model()
@@ -58,12 +58,12 @@ class ViewsURLTests(TestCase):
 
     def setUP(self):
         self.small_gif = (
-             b'\x47\x49\x46\x38\x39\x61\x02\x00'
-             b'\x01\x00\x80\x00\x00\x00\x00\x00'
-             b'\xFF\xFF\xFF\x21\xF9\x04\x00\x00'
-             b'\x00\x00\x00\x2C\x00\x00\x00\x00'
-             b'\x02\x00\x01\x00\x00\x02\x02\x0C'
-             b'\x0A\x00\x3B'
+            b'\x47\x49\x46\x38\x39\x61\x02\x00'
+            b'\x01\x00\x80\x00\x00\x00\x00\x00'
+            b'\xFF\xFF\xFF\x21\xF9\x04\x00\x00'
+            b'\x00\x00\x00\x2C\x00\x00\x00\x00'
+            b'\x02\x00\x01\x00\x00\x02\x02\x0C'
+            b'\x0A\x00\x3B'
         )
         self.uploaded = SimpleUploadedFile(
             name='small.gif',
@@ -292,3 +292,67 @@ class CacheTests(TestCase):
         cache.clear()
         response3 = self.authorized_client.get(reverse('posts:index'))
         self.assertNotEqual(response.content, response3.content)
+
+
+class FollowTests(TestCase):
+    def setUp(self):
+        self.client_auth_follower = Client()
+        self.client_auth_following = Client()
+        self.user_follower = User.objects.create_user(username='follower')
+        self.user_following = User.objects.create_user(username='following')
+        self.user = User.objects.create_user(username='author')
+        self.post = Post.objects.create(
+            author=self.user,
+            text='Тестовая запись'
+        )
+        self.client_auth_follower.force_login(self.user_follower)
+        self.client_auth_following.force_login(self.user_following)
+
+    def test_follow(self):
+        self.client_auth_follower.get(reverse('posts:profile_follow',
+                                              kwargs={'username':
+                                                      self.user_following.
+                                                      username}))
+        self.assertEqual(Follow.objects.all().count(), 1)
+
+    def test_unfollow(self):
+        self.client_auth_follower.get(reverse('posts:profile_follow',
+                                              kwargs={'username':
+                                                      self.user_following.
+                                                      username}))
+        self.client_auth_follower.get(reverse('posts:profile_unfollow',
+                                      kwargs={'username':
+                                              self.user_following.username}))
+        self.assertEqual(Follow.objects.all().count(), 0)
+
+
+class FollowTests(TestCase):
+    def setUp(self):
+        self.client_auth_follower = Client()
+        self.client_auth_following = Client()
+        self.user_follower = User.objects.create_user(username='follower')
+        self.user_following = User.objects.create_user(username='following')
+        self.post = Post.objects.create(
+            author=self.user_following,
+            text='Тестовая запись'
+        )
+        self.client_auth_follower.force_login(self.user_follower)
+        self.client_auth_following.force_login(self.user_following)
+
+    def test_follow(self):
+        self.client_auth_follower.get(reverse('posts:profile_follow',
+                                              kwargs={'username':
+                                                      self.user_following.
+                                                      username}))
+        self.assertEqual(Follow.objects.all().count(), 1)
+
+    def test_unfollow(self):
+        self.client_auth_follower.get(reverse('posts:profile_follow',
+                                              kwargs={'username':
+                                                      self.user_following.
+                                                      username}))
+        self.client_auth_follower.get(reverse('posts:profile_unfollow',
+                                      kwargs={'username':
+                                              self.user_following.username}))
+        self.assertEqual(Follow.objects.all().count(), 0)
+
