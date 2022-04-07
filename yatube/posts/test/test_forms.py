@@ -220,7 +220,6 @@ class PostCreateFormTests(TestCase):
         self.assertRedirects(response, reverse(
             'posts:post_detail', kwargs={'post_id': post.id}))
 
-
     def test_create_post(self):
         count_posts = Post.objects.count()
         small_gif = (

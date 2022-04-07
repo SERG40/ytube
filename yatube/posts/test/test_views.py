@@ -355,4 +355,3 @@ class FollowTests(TestCase):
                                       kwargs={'username':
                                               self.user_following.username}))
         self.assertEqual(Follow.objects.all().count(), 0)
-
