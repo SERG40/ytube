@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block title %}
+  {% if is_edit %}
+    Редактирование поста
+  {% else %}
+    Добавление нового поста
+  {% endif %}
+{% endblock %}
+{% block content %}
+  {% if is_edit %}
+    <h1>Редактирование поста</h1>
+  {% else %}
+    <h1>Добавление нового поста</h1>
+  {% endif %}
+<form method="POST" class="post-form" enctype="multipart/form-data">
+
+  {% for key,value in form.errors.items %}
+    <div class="alert alert-danger" role="alert">
+      {{ value|escape}}
+    </div>
+  {% endfor %}
+  {% csrf_token %}
+  {% for field in form %}
+    <div class="form-group">
+      {{ field.label }}
+      {{ field }}
+      <small>{{ field.help_text|safe }}</small>
+    </div>
+{% endfor %}
+
+<button type="submit" class="btn btn-primary" >
+  {% if is_edit %}
+    Сохранить
+  {% else %}
+    Добавить
+  {% endif %}
+</button>
+</form>
+{% endblock %}

@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% load thumbnail %}
+{% load cache %}
+
+{% block content %}
+  <h1>Последние обновления сообщества </h1>
+  {% cache 20 index_page %}
+  {% for post in page_obj %}
+  {% thumbnail post.image "960x339" crop="center" upscale=True as im %}
+    <img class="card-img my-2" src="{{ im.url }}">
+  {% endthumbnail %} 
+    {% include 'posts/includes/card_post.html' with profile_link_flag=True group_link_flag=True %}
+  {% endfor %}
+  {% endcache %}
+  {% include 'posts/includes/paginator.html' %}
+{% endblock %} 
