@@ -1,3 +1,4 @@
+from itertools import count
 import shutil
 import tempfile
 
@@ -126,6 +127,7 @@ class ViewsURLTests(TestCase):
         self.assertEqual(first_object.author, self.user)
         self.assertEqual(first_object.group, self.group)
         self.assertEqual(first_object.image, self.post.image)
+        self.assertEqual(self.post.group, self.group)
         # Доп проверка index что пост появился в группе.
         object = response.context.get('page_obj').object_list
         self.assertIn(self.post, object)
@@ -139,17 +141,13 @@ class ViewsURLTests(TestCase):
         self.assertEqual(first_object.author, self.user)
         self.assertEqual(first_object.group.slug, self.group.slug)
         self.assertEqual(first_object.image, self.post.image)
+        self.assertEqual(self.post.author, self.user)
         # Доп проверка index что пост появился в profile.
         object = response.context.get('page_obj').object_list
         self.assertIn(self.post, object)
 
     def test_post_detail_correct_context(self):
         """Проверка context post_detail."""
-        self.comment = Comment.objects.create(
-            author=self.user,
-            post=self.post,
-            text='test-comment'
-        )
         response = self.authorized_client.get(
             reverse('posts:post_detail',
                     kwargs={'post_id': f'{self.post.id}'}))
@@ -158,9 +156,20 @@ class ViewsURLTests(TestCase):
         self.assertEqual(first_object.text, self.post.text)
         self.assertEqual(first_object.group.title, self.group.title)
         self.assertEqual(first_object.image, self.post.image)
-        # Тест комент
+
+    def test_comment(self):
+        """Проверка коментария."""
+        self.comment = Comment.objects.create(
+            author=self.user,
+            post=self.post,
+            text='test-comment'
+        )
+        response = self.authorized_client.get(
+            reverse('posts:post_detail',
+                    kwargs={'post_id': f'{self.post.id}'}))
         comment = response.context.get('comments')[0]
         self.assertEqual(comment, self.comment)
+        self.assertEqual(count.comment, 1)
 
     def test_create_post_show_correct_context(self):
         """Форма создания поста."""
@@ -292,38 +301,6 @@ class CacheTests(TestCase):
         cache.clear()
         response3 = self.authorized_client.get(reverse('posts:index'))
         self.assertNotEqual(response.content, response3.content)
-
-
-class FollowTests(TestCase):
-    def setUp(self):
-        self.client_auth_follower = Client()
-        self.client_auth_following = Client()
-        self.user_follower = User.objects.create_user(username='follower')
-        self.user_following = User.objects.create_user(username='following')
-        self.user = User.objects.create_user(username='author')
-        self.post = Post.objects.create(
-            author=self.user,
-            text='Тестовая запись'
-        )
-        self.client_auth_follower.force_login(self.user_follower)
-        self.client_auth_following.force_login(self.user_following)
-
-    def test_follow(self):
-        self.client_auth_follower.get(reverse('posts:profile_follow',
-                                              kwargs={'username':
-                                                      self.user_following.
-                                                      username}))
-        self.assertEqual(Follow.objects.all().count(), 1)
-
-    def test_unfollow(self):
-        self.client_auth_follower.get(reverse('posts:profile_follow',
-                                              kwargs={'username':
-                                                      self.user_following.
-                                                      username}))
-        self.client_auth_follower.get(reverse('posts:profile_unfollow',
-                                      kwargs={'username':
-                                              self.user_following.username}))
-        self.assertEqual(Follow.objects.all().count(), 0)
 
 
 class FollowTests(TestCase):

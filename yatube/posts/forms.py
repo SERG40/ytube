@@ -12,11 +12,6 @@ class PostForm(forms.ModelForm):
             'text': forms.Textarea(),
         }
 
-        help_textss = {
-            "group": "Группа",
-            "text": "Текст"
-        }
-
 
 class CommentForm(forms.ModelForm):
     class Meta:
@@ -29,5 +24,5 @@ class CommentForm(forms.ModelForm):
 class FollowForm(forms.ModelForm):
     class Meta:
         model = Follow
-        fields = ['user']
+        fields = ('user',)
         labels = {'user': 'Подписка на:', 'author': 'Автор записи'}

@@ -1,5 +1,7 @@
+from http import HTTPStatus
 import shutil
 import tempfile
+from tokenize import group
 
 from django.contrib.auth import get_user_model
 from django.test import Client, TestCase, override_settings
@@ -9,7 +11,6 @@ from django.conf import settings
 
 from posts.models import Group, Post
 from posts.forms import PostForm
-from http import HTTPStatus
 
 User = get_user_model()
 TEMP_MEDIA_ROOT = tempfile.mkdtemp(dir=settings.BASE_DIR)
@@ -66,6 +67,7 @@ class PostCreateFormTests(TestCase):
 
     def test_edit_post(self):
         """Изменение поста с post_id в базе данных"""
+        count_posts = Post.objects.count()
         post = Post.objects.create(
             author=self.user,
             text='Тестовый пост Тестовый пост',
@@ -89,10 +91,10 @@ class PostCreateFormTests(TestCase):
         self.assertEqual(post_2.author, self.user)
         self.assertEqual(post_2.group, self.group2)
         self.assertEqual(post_2.pub_date, post.pub_date)
+        self.assertEqual(Post.objects.count(), count_posts + 1)
 
-    def create_post_with_group(self):
+    def test_create_post_with_group(self):
         """ Корректно создается пост без группы"""
-        count_posts = Post.objects.count()
         form_data = {
             'text': 'Данные из формы'
         }
@@ -102,12 +104,13 @@ class PostCreateFormTests(TestCase):
             follow=True,
         )
         post = Post.objects.last()
-        self.assertEqual(Post.objects.count(), count_posts + 1)
+        group = Group.objects.last()
+        self.assertEqual(Post.objects.all().count(), 1)
         self.assertRedirects(response, reverse(
             'posts:profile', kwargs={'username': f'{self.user}'}))
         self.assertEqual(post.author, self.user)
         self.assertEqual(post.text, form_data['text'])
-        self.assertEqual(post.group, self.group)
+        self.assertEqual(group, self.group)
 
     def test_if_form_no_valid(self):
         """Не создаются посты, если передаем не валидную форму"""
@@ -138,28 +141,23 @@ class PostCreateFormTests(TestCase):
         self.assertEqual(Post.objects.count(), count_posts)
 
     def test_post_edit_without_change_group(self):
-        """Проверяем, что валидная форма, без изменения группы
-        редактирует запись в Post."""
+        """Проверяем, что валидная форма меняет группу."""
         post = Post.objects.create(
             author=self.user,
-            text='Тестовый пост Тестовый пост',
             group=self.group,
         )
         form_data = {
-            'text': '123'
+            'group': 123
         }
-        response = self.authorized_client.post(
+        self.authorized_client.post(
             reverse('posts:post_edit',
                     kwargs={'post_id': post.id}),
             data=form_data,
             follow=True
         )
         get_post = Post.objects.get(id=post.id)
-        self.assertRedirects(response, reverse(
-            'posts:post_detail',
-            kwargs={'post_id': post.id}))
-        self.assertEqual(get_post.text, form_data['text'])
         self.assertEqual(get_post.author, self.user)
+        self.assertEqual(get_post.group, self.group)
 
     def test_POST_request_guest_client(self):
         """При POST запросе неавторизованного пользователя пост
@@ -248,3 +246,4 @@ class PostCreateFormTests(TestCase):
         self.assertEqual(Post.objects.count(), count_posts + 1)
         self.assertRedirects(response, reverse(
             'posts:profile', kwargs={'username': f'{self.user}'}))
+        

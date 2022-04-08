@@ -1,6 +1,5 @@
-from django.utils import timezone
+from django.utils.timezone import now
 
 
 def year(request):
-    now = timezone.now()
-    return {'year': now}
+    return {'year': now().year}

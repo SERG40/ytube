@@ -1,8 +1,9 @@
+from http import HTTPStatus
+
 from django.contrib.auth import get_user_model
 from django.test import TestCase, Client
 
 from posts.models import Post, Group
-from http import HTTPStatus
 
 User = get_user_model()
 
@@ -14,30 +15,12 @@ class PostURLTests(TestCase):
         # Пользователь
         cls.user = User.objects.create_user(username='Any')
 
-        # Автор поста
-        cls.user1 = User.objects.create_user(username='author')
-
         # Гость
         cls.guest_client = Client()
 
         # Авторизованый пользователь
         cls.authorized_client = Client()
         cls.authorized_client.force_login(cls.user)
-
-        # Автор поста
-        cls.authorized_client1 = Client()
-        cls.authorized_client1.force_login(cls.user1)
-
-        cls.post = Post.objects.create(
-            author=cls.user1,
-            text='Тестовая запись для создания нового поста'
-        )
-
-        cls.group = Group.objects.create(
-            title='Заголовок для тестовой группы',
-            slug='test_slug',
-            description='Описание для теста'
-        )
 
     def test_about(self):
         """Тест about доступность страниц"""

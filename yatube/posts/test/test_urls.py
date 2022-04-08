@@ -1,8 +1,9 @@
+from http import HTTPStatus
+
 from django.contrib.auth import get_user_model
 from django.test import TestCase, Client
 
 from posts.models import Post, Group
-from http import HTTPStatus
 
 User = get_user_model()
 
@@ -79,11 +80,6 @@ class PostURLTests(TestCase):
         """Test post_edit авторизованым автором"""
         response = self.authorized_client1.get(f'/posts/{self.post.id}/edit/')
         self.assertEqual(response.status_code, HTTPStatus.OK)
-
-    def test_post_create_authorized_not_author(self):
-        """Test post_create авторизованым не автором"""
-        response = self.authorized_client.get(f'/posts/{self.post.id}/edit/')
-        self.assertEqual(response.status_code, HTTPStatus.FOUND)
 
     def test_template_post_edit(self):
         """Test шаблона post_edit авторизованым не автором"""
