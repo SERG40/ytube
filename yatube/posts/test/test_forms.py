@@ -319,4 +319,3 @@ class CommentCreateFormTests(TestCase):
                 post=self.post
             ).exists()
         )
-        
