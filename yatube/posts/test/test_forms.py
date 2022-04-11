@@ -1,7 +1,7 @@
 from http import HTTPStatus
+
 import shutil
 import tempfile
-from tokenize import group
 
 from django.contrib.auth import get_user_model
 from django.test import Client, TestCase, override_settings
@@ -9,7 +9,7 @@ from django.urls import reverse
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.conf import settings
 
-from posts.models import Group, Post
+from posts.models import Group, Post, Comment
 from posts.forms import PostForm
 
 User = get_user_model()
@@ -219,6 +219,7 @@ class PostCreateFormTests(TestCase):
             'posts:post_detail', kwargs={'post_id': post.id}))
 
     def test_create_post(self):
+        """Создание поста с картинкой, проверка картинки."""
         count_posts = Post.objects.count()
         small_gif = (
             b'\x47\x49\x46\x38\x39\x61\x02\x00'
@@ -243,7 +244,79 @@ class PostCreateFormTests(TestCase):
             data=form_data,
             follow=True,
         )
+        new_post = Post.objects.order_by('pk').last()
         self.assertEqual(Post.objects.count(), count_posts + 1)
         self.assertRedirects(response, reverse(
             'posts:profile', kwargs={'username': f'{self.user}'}))
+        self.assertEqual(response.status_code, HTTPStatus.OK)
+        self.assertEqual(new_post.text, form_data['text'])
+        self.assertEqual(new_post.group.pk, form_data['group'])
+        self.assertEqual(new_post.image.name,
+                         'posts/' + form_data['image'].name)
+
+class CommentCreateFormTests(TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.user = User.objects.create_user(username='testname')
+        cls.authorized_client = Client()
+        cls.authorized_client.force_login(cls.user)
+        cls.post = Post.objects.create(
+            author=cls.user,
+            text='Тестовый пост Тестовый пост'
+        )
+
+    def test_comment_create_authorized(self):
+        """Проверяем, что валидная форма создает запись в Comment
+        авторизованным пользователем."""
+        comments_count = Comment.objects.filter(post=self.post).count()
+        form_data = {
+            'text': 'Тестовый комментарий',
+            'post': self.post,
+        }
+        response = self.authorized_client.post(
+            reverse('posts:add_comment',
+                    kwargs={'post_id': self.post.id}),
+            data=form_data,
+            follow=True
+        )
+        self.assertRedirects(response, reverse(
+            'posts:post_detail', kwargs={'post_id': self.post.id}))
+        self.assertEqual(Comment.objects.filter(
+            post=self.post).count(),
+            comments_count + 1
+        )
+        self.assertTrue(
+            Comment.objects.filter(
+                text='Тестовый комментарий',
+                post=self.post
+            ).exists()
+        )
+
+    def test_comment_dont_create_anonymous(self):
+        """Проверяем, что валидная форма не создает запись в Comment
+        анонимным пользователем."""
+        comments_count = Comment.objects.filter(post=self.post).count()
+        form_data = {
+            'text': 'Тестовый комментарий анонимный',
+            'post': self.post,
+        }
+        response = self.client.post(
+            reverse('posts:add_comment',
+                    kwargs={'post_id': self.post.id}),
+            data=form_data,
+            follow=True
+        )
+        self.assertRedirects(response, '/auth/login/?next=/posts/1/comment/')
+        self.assertEqual(Comment.objects.filter(
+            post=self.post).count(),
+            comments_count
+        )
+        self.assertFalse(
+            Comment.objects.filter(
+                text='Тестовый комментарий анонимный',
+                post=self.post
+            ).exists()
+        )
         

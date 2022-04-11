@@ -1,4 +1,3 @@
-from itertools import count
 import shutil
 import tempfile
 
@@ -245,6 +244,7 @@ class PaginatorViewsTest(TestCase):
         self.authorized_client.force_login(self.user)
 
     def test_first_page_contains_ten_posts(self):
+        """Работает пагинатор 10 страниц."""
         list_urls = {
             reverse('posts:index'): 'index',
             reverse('posts:group_list',
@@ -259,6 +259,7 @@ class PaginatorViewsTest(TestCase):
                     ('page_obj').object_list), (settings.GLOBAL_FOR_PAGINATOR))
 
     def test_second_page_contains_three_posts(self):
+        """Пагинатор выводит остаток страниц все что выше 10 на новой странице."""
         list_urls = {
             reverse('posts:index') + '?page=2': 'index',
             reverse('posts:group_list',
@@ -317,18 +318,19 @@ class FollowTests(TestCase):
         self.client_auth_following.force_login(self.user_following)
 
     def test_follow(self):
+        """ Тест follow."""
         self.client_auth_follower.get(reverse('posts:profile_follow',
                                               kwargs={'username':
                                                       self.user_following.
                                                       username}))
-        self.assertEqual(Follow.objects.all().count(), 1)
+        self.assertEqual(Follow.objects.count(), 1)
 
     def test_unfollow(self):
-        self.client_auth_follower.get(reverse('posts:profile_follow',
-                                              kwargs={'username':
-                                                      self.user_following.
-                                                      username}))
+        """ Тест unfollow."""
+        Follow.objects.create(user=self.user_follower,
+                              author=self.user_following)
+
         self.client_auth_follower.get(reverse('posts:profile_unfollow',
                                       kwargs={'username':
                                               self.user_following.username}))
-        self.assertEqual(Follow.objects.all().count(), 0)
+        self.assertEqual(Follow.objects.count(), 0)
