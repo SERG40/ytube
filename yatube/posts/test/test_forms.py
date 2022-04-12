@@ -300,8 +300,7 @@ class CommentCreateFormTests(TestCase):
         анонимным пользователем."""
         comments_count = Comment.objects.filter(post=self.post).count()
         form_data = {
-            'text': 'Тестовый комментарий анонимный',
-            'post': self.post,
+            'text': 'Тестовый комментарий анонимный'
         }
         response = self.client.post(
             reverse('posts:add_comment',
