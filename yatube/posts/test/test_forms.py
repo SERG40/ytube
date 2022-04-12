@@ -254,6 +254,7 @@ class PostCreateFormTests(TestCase):
         self.assertEqual(new_post.image.name,
                          'posts/' + form_data['image'].name)
 
+
 class CommentCreateFormTests(TestCase):
 
     @classmethod

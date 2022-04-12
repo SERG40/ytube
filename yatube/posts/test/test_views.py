@@ -168,7 +168,7 @@ class ViewsURLTests(TestCase):
                     kwargs={'post_id': f'{self.post.id}'}))
         comment = response.context.get('comments')[0]
         self.assertEqual(comment, self.comment)
-        self.assertEqual(count.comment, 1)
+        self.assertEqual(Comment.objects.count(), 1)
 
     def test_create_post_show_correct_context(self):
         """Форма создания поста."""
@@ -212,6 +212,7 @@ class ViewsURLTests(TestCase):
         self.assertNotIn(self.post, object)
 
     def test_comment(self):
+        """Тест коментария."""
         response = self.authorized_client.get(
             reverse('posts:add_comment',
                     kwargs={'post_id': self.post.id}))
