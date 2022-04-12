@@ -260,7 +260,8 @@ class PaginatorViewsTest(TestCase):
                     ('page_obj').object_list), (settings.GLOBAL_FOR_PAGINATOR))
 
     def test_second_page_contains_three_posts(self):
-        """Пагинатор выводит остаток страниц все что выше 10 на новой странице."""
+        """Пагинатор выводит остаток страниц
+          все что выше 10 на новой странице."""
         list_urls = {
             reverse('posts:index') + '?page=2': 'index',
             reverse('posts:group_list',
