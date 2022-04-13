@@ -1,3 +1,4 @@
+from cgitb import text
 from django import forms
 
 from .models import Post, Comment
@@ -18,3 +19,4 @@ class CommentForm(forms.ModelForm):
         model = Comment
         fields = ('text',)
         labels = {'text': 'Добавить комментарий'}
+        help_texts = {'text': 'Текст комментария'}
