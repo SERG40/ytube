@@ -4,7 +4,7 @@
 
 {% block content %}
   {% include 'includes/switcher.html' %}
-  {% cache 20 index_page with post request.user.username %}
+  {% cache 20 index_page request.user.username %}
   {% for post in page_obj %} 
       <a href="{% url 'posts:group_list' post.group.slug %}">
         все записи группы
