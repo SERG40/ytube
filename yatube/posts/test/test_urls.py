@@ -1,4 +1,5 @@
 from http import HTTPStatus
+from urllib import response
 
 from django.contrib.auth import get_user_model
 from django.test import TestCase, Client
@@ -85,6 +86,11 @@ class PostURLTests(TestCase):
         """Test шаблона post_edit авторизованым не автором"""
         response = self.authorized_client1.get(f'/posts/{self.post.id}/edit/')
         self.assertTemplateUsed(response, 'posts/create_post.html')
+
+    def test_follow(self):
+        """Тест follow шаблона."""
+        response = self.authorized_client.get('/follow/')
+        self.assertTemplateUsed(response, 'posts/follow.html')
 
     def test_page_404(self):
         """Тест ошибки 404"""

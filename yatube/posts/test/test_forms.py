@@ -95,6 +95,7 @@ class PostCreateFormTests(TestCase):
 
     def test_create_post_with_group(self):
         """ Корректно создается пост без группы"""
+        post_count = Post.objects.count()
         form_data = {
             'text': 'Данные из формы'
         }
@@ -104,13 +105,12 @@ class PostCreateFormTests(TestCase):
             follow=True,
         )
         post = Post.objects.last()
-        group = Group.objects.last()
-        self.assertEqual(Post.objects.all().count(), 1)
+        self.assertEqual(Post.objects.all().count(), post_count + 1)
         self.assertRedirects(response, reverse(
             'posts:profile', kwargs={'username': f'{self.user}'}))
         self.assertEqual(post.author, self.user)
         self.assertEqual(post.text, form_data['text'])
-        self.assertEqual(group, self.group)
+        self.assertTrue(self.group, None)
 
     def test_if_form_no_valid(self):
         """Не создаются посты, если передаем не валидную форму"""
@@ -147,7 +147,8 @@ class PostCreateFormTests(TestCase):
             group=self.group,
         )
         form_data = {
-            'group': 123
+            'text': 'Данные из формы',
+            'group': PostCreateFormTests.group2.pk
         }
         self.authorized_client.post(
             reverse('posts:post_edit',
@@ -157,7 +158,9 @@ class PostCreateFormTests(TestCase):
         )
         get_post = Post.objects.get(id=post.id)
         self.assertEqual(get_post.author, self.user)
-        self.assertEqual(get_post.group, self.group)
+        self.assertEqual(get_post.group, self.group2)
+        self.assertEqual(get_post.text, form_data['text'])
+        self.assertEqual(get_post.pub_date, post.pub_date)
 
     def test_POST_request_guest_client(self):
         """При POST запросе неавторизованного пользователя пост
@@ -181,9 +184,10 @@ class PostCreateFormTests(TestCase):
             reverse('posts:post_create'),
             data=form_data
         )
-        get_post = Post.objects.get(id=post.id)
+        get_post = Post.objects.last()
         self.assertEqual(get_post.author, self.user)
         self.assertEqual(get_post.group, self.group)
+        self.assertEqual(get_post.text, post.text)
         self.assertEqual(response.status_code, HTTPStatus.FOUND)
         self.assertRedirects(
             response,
@@ -251,8 +255,8 @@ class PostCreateFormTests(TestCase):
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertEqual(new_post.text, form_data['text'])
         self.assertEqual(new_post.group.pk, form_data['group'])
-        self.assertEqual(new_post.image.name,
-                         'posts/' + form_data['image'].name)
+        self.assertEqual(new_post.image,
+                         f'posts/{form_data["image"]}')
 
 
 class CommentCreateFormTests(TestCase):
@@ -312,10 +316,4 @@ class CommentCreateFormTests(TestCase):
         self.assertEqual(Comment.objects.filter(
             post=self.post).count(),
             comments_count
-        )
-        self.assertFalse(
-            Comment.objects.filter(
-                text='Тестовый комментарий анонимный',
-                post=self.post
-            ).exists()
         )

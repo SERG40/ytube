@@ -1,3 +1,5 @@
+from http import HTTPStatus
+
 import shutil
 import tempfile
 
@@ -92,7 +94,8 @@ class ViewsURLTests(TestCase):
                 reverse('posts:post_detail',
                         kwargs={'post_id': f'{self.post.id}'})
             ),
-            'posts/create_post.html': reverse('posts:post_create')
+            'posts/create_post.html': reverse('posts:post_create'),
+            'posts/follow.html': reverse('posts:follow_index')
         }
         for template, reverse_name in templates_page_names.items():
             with self.subTest(template=template):
@@ -158,6 +161,7 @@ class ViewsURLTests(TestCase):
 
     def test_comment(self):
         """Проверка коментария."""
+        comment_count = Comment.objects.count()
         self.comment = Comment.objects.create(
             author=self.user,
             post=self.post,
@@ -166,9 +170,18 @@ class ViewsURLTests(TestCase):
         response = self.authorized_client.get(
             reverse('posts:post_detail',
                     kwargs={'post_id': f'{self.post.id}'}))
+        response2 = self.authorized_client.get(
+            reverse('posts:add_comment',
+                    kwargs={'post_id': self.post.id}))
+        self.assertRedirects(response2, f'/posts/{self.post.id}/')
         comment = response.context.get('comments')[0]
         self.assertEqual(comment, self.comment)
-        self.assertEqual(Comment.objects.count(), 1)
+        self.assertEqual(Comment.objects.count(), comment_count + 1)
+        # Приверка на то что гость не может оставить коментарий
+        response3 = self.guest_client.get(
+            reverse('posts:add_comment',
+                    kwargs={'post_id': self.post.id}))
+        self.assertEqual(response3.status_code, HTTPStatus.FOUND)
 
     def test_create_post_show_correct_context(self):
         """Форма создания поста."""
@@ -210,13 +223,6 @@ class ViewsURLTests(TestCase):
                 kwargs={'slug': self.group2.slug}))
         object = response.context.get('page_obj').object_list
         self.assertNotIn(self.post, object)
-
-    def test_comment(self):
-        """Тест коментария."""
-        response = self.authorized_client.get(
-            reverse('posts:add_comment',
-                    kwargs={'post_id': self.post.id}))
-        self.assertRedirects(response, f'/posts/{self.post.id}/')
 
 
 class PaginatorViewsTest(TestCase):
@@ -321,11 +327,12 @@ class FollowTests(TestCase):
 
     def test_follow(self):
         """ Тест follow."""
+        count_follow = Follow.objects.count()
         self.client_auth_follower.get(reverse('posts:profile_follow',
                                               kwargs={'username':
                                                       self.user_following.
                                                       username}))
-        self.assertEqual(Follow.objects.count(), 1)
+        self.assertEqual(Follow.objects.count(), count_follow + 1)
 
     def test_unfollow(self):
         """ Тест unfollow."""
