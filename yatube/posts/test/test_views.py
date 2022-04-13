@@ -2,7 +2,6 @@ from http import HTTPStatus
 
 import shutil
 import tempfile
-from urllib import response
 
 from django.contrib.auth import get_user_model
 from django.test import TestCase, Client, override_settings
