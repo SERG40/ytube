@@ -2,6 +2,7 @@ from http import HTTPStatus
 
 import shutil
 import tempfile
+from urllib import response
 
 from django.contrib.auth import get_user_model
 from django.test import TestCase, Client, override_settings
@@ -314,6 +315,7 @@ class CacheTests(TestCase):
 
 class FollowTests(TestCase):
     def setUp(self):
+        self.guest_client = Client()
         self.client_auth_follower = Client()
         self.client_auth_following = Client()
         self.user_follower = User.objects.create_user(username='follower')
@@ -343,3 +345,10 @@ class FollowTests(TestCase):
                                       kwargs={'username':
                                               self.user_following.username}))
         self.assertEqual(Follow.objects.count(), 0)
+
+        def test_follow(self):
+            """Тест что гостя перенаправит на регистрацию."""
+        response = self.guest_client.get(
+            reverse('posts:follow_index')
+        )
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
