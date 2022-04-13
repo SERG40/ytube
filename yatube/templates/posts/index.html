@@ -4,7 +4,7 @@
 {% block content %}
   {% include 'includes/switcher.html' %}
   <h1>Последние обновления сообщества </h1>
-  {% cache 20 index_page request.user.username %}
+  {% cache 20 index_page page_obj.number %}
   {% for post in page_obj %} 
     {% include 'posts/includes/card_post.html' with profile_link_flag=True group_link_flag=True %}
   {% endfor %}
