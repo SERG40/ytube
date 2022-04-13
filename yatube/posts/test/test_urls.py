@@ -1,5 +1,4 @@
 from http import HTTPStatus
-from urllib import response
 
 from django.contrib.auth import get_user_model
 from django.test import TestCase, Client
