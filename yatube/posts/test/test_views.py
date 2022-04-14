@@ -167,21 +167,23 @@ class ViewsURLTests(TestCase):
             post=self.post,
             text='test-comment'
         )
+        form_data = {
+            'text': 'Тестовый комент'
+        }
         response = self.authorized_client.get(
             reverse('posts:post_detail',
-                    kwargs={'post_id': f'{self.post.id}'}))
-        response2 = self.authorized_client.get(
-            reverse('posts:add_comment',
-                    kwargs={'post_id': self.post.id}))
-        self.assertRedirects(response2, f'/posts/{self.post.id}/')
-        comment = response.context.get('comments')[0]
-        self.assertEqual(comment, self.comment)
+                    kwargs={'post_id': f'{self.post.id}'}),
+            data=form_data,
+            follow=True
+        )
         self.assertEqual(Comment.objects.count(), comment_count + 1)
-        # Приверка на то что гость не может оставить коментарий
-        response3 = self.guest_client.get(
-            reverse('posts:add_comment',
-                    kwargs={'post_id': self.post.id}))
-        self.assertEqual(response3.status_code, HTTPStatus.FOUND)
+        form_fields = {
+            'text': forms.fields.CharField
+        }
+        for value, expected in form_fields.items():
+            with self.subTest(value=value):
+                form_field = response.context['form'].fields[value]
+                self.assertIsInstance(form_field, expected)
 
     def test_create_post_show_correct_context(self):
         """Форма создания поста."""

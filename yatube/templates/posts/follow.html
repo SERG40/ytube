@@ -6,9 +6,6 @@
   {% include 'includes/switcher.html' %}
   {% cache 20 index_page with page page_obj.number %}
   {% for post in page_obj %} 
-      <a href="{% url 'posts:group_list' post.group.slug %}">
-        все записи группы
-      </a>
     {% include 'posts/includes/card_post.html' with profile_link_flag=True group_link_flag=True %}
   {% endfor %}
   {% endcache %}
